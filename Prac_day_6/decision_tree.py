@@ -1,25 +1,49 @@
 import pandas as pd
 import sklearn.model_selection as ms
 from sklearn import tree
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix 
-from sklearn.metrics import classification_report 
-df = pd.read_csv("spambase.csv")
-# print(df.head())
-# print(df.info())
-# print(df.describe())
-# print(df.isnull().sum())
-df.fillna(df.mean(), inplace=True)
-# print("Duplicate rows:", df.duplicated().sum())
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Load dataset
+df = pd.read_csv("titanic.csv")
+
+# Fill missing values
+df["Age"] = df["Age"].fillna(df["Age"].median())
+df["Embarked"] = df["Embarked"].fillna(df["Embarked"].mode()[0])
+
+# Drop Cabin because it has many missing values
+df.drop("Cabin", axis=1, inplace=True)
+
+# Remove duplicates
 df.drop_duplicates(inplace=True)
 
+# Drop unnecessary columns
+df.drop(["PassengerId", "Name", "Ticket"], axis=1, inplace=True)
+
+# Encode categorical columns
+le = LabelEncoder()
+
+df["Sex"] = le.fit_transform(df["Sex"])
+df["Embarked"] = le.fit_transform(df["Embarked"])
+
 # Features and Target
-X = df.drop("spam", axis=1)
-y = df["spam"]
-x_train, x_test, y_train, y_test = ms.train_test_split(X, y, test_size=0.2, random_state=42)
+X = df.drop("Survived", axis=1)
+y = df["Survived"]
+
+# Split data
+x_train, x_test, y_train, y_test = ms.train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Decision Tree
 dtc = tree.DecisionTreeClassifier(random_state=42)
 dtc.fit(x_train, y_train)
-y_predict=dtc.predict(x_test)
-print('Accuracy of Decision Tree-Test: ', accuracy_score(y_predict, y_test))
-print('\n','Confusion Matrix - Test:','\n',confusion_matrix(y_test,y_predict))
-print(classification_report(y_test,y_predict))
+
+# Prediction
+y_predict = dtc.predict(x_test)
+
+# Evaluation
+print("Accuracy:", accuracy_score(y_test, y_predict))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_predict))
+print("\nClassification Report:\n")
+print(classification_report(y_test, y_predict))
